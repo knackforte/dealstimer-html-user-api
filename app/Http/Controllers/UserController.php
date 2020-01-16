@@ -108,6 +108,12 @@ class UserController extends Controller
                 if(!empty($request->get("street_address"))){
                     $user_details->street_address = $request->get("street_address");
                 }
+                if ($request->hasFile('picture')) {
+                    $images = $request->picture->getClientOriginalName();
+                    $images = time().'_'.$images;
+                    $request->picture->storeAs('public/images',$images);
+                    $user_details->picture = $images;
+                }
                 if($user_details->save()){
                     $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
                     ->select('users.*','user_details.*')
