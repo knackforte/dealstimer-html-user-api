@@ -15,20 +15,19 @@ class CreateUserDetailsTable extends Migration
     {
         Schema::create('user_details', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('username');
-            $table->string('picture');
-            $table->string('cell_no');
-            $table->string('address');
-            $table->string('gender');
+            $table->string('picture')->nullable();
+            $table->string('cell_no')->nullable();
+            $table->string('address')->nullable();
+            $table->string('gender')->nullable();
             $table->string('store_name');
-            $table->string('store_url');
-            $table->string('country');
-            $table->string('state');
-            $table->string('city');
-            $table->string('zip');
-            $table->string('latitude');
-            $table->string('longitude');
-            $table->string('street_address');
+            $table->string('store_url')->nullable();
+            $table->string('country')->nullable();
+            $table->string('state')->nullable();
+            $table->string('city')->nullable();
+            $table->string('zip')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
+            $table->string('street_address')->nullable();
             $table->unsignedInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users');
             $table->timestamps();

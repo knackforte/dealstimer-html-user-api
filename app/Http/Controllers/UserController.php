@@ -9,6 +9,7 @@ use App\UserDetails;
 use App\Role;
 use DB;
 use Validator;
+use Exception;
 
 class UserController extends Controller
 {
@@ -39,11 +40,26 @@ class UserController extends Controller
             'last_name'                  => 'required',
             'email'                      => 'required|email|unique:users',
             'password'                   => 'required|min:8|confirmed',
-            'password_confirmation'      => 'required|min:8'
+            'password_confirmation'      => 'required|min:8',
+            'username'                   => 'required|unique:users'
         );
-        $validator = Validator::make($request->all(), $rules);
+        $messages = array(
+            'first_name.required' => 'First name is required.',
+            'last_name.required' => 'Last name is required.',
+            'email.required' => 'Email is required.',
+            'password.required' => 'Password is required.',
+            'username.required' => 'Username is required.',
+            'username.unique:users' => 'Entered Username already exists.',
+            'password_confirmation.required' => 'Confim Password is required.',
+            'email.email' => 'Invalid Email format.',
+            'email.unique:users' => 'Entered Email already exists.',
+            'password.min:8' => 'Password should contain minimum of 8 characters.',
+            'password.confirmed' => 'Password and confirm password should match.',
+            'password_confirmation.min:8' => 'Confirm Password should contain minimum of 8 characters.'
+        );
+        $validator = Validator::make($request->all(), $rules, $messages);
         if($validator->fails()){
-            return response()->json($validator->errors(),400);
+            return response()->json($validator->errors()->first(),400);
         }
 
         $role = $request->get("role");
@@ -54,6 +70,7 @@ class UserController extends Controller
             $user->last_name = $request->get("last_name");
             $user->email = $request->get("email");
             $user->password = Hash::make($request->get("password"));
+            $user->username = $request->get("username");
             $role = Role::where('name','=','user')->first();
             if($user->save()){
                 $user->attachRole($role);
@@ -68,11 +85,14 @@ class UserController extends Controller
             $user->last_name = $request->get("last_name");
             $user->email = $request->get("email");
             $user->password = Hash::make($request->get("password"));
-            $role = Role::where('name','=','vendor')->first();
-            if($user->save()){
+            $user->username = $request->get("username");
+
+            DB::beginTransaction();
+            try{
+                $role = Role::where('name','=','vendor')->first();
+                $user->save();
                 $user->attachRole($role);
                 $user_details = new UserDetails;
-                $user_details->username = $request->get("username");
                 $user_details->store_name = $request->get("store_name");
                 $user_details->user_id = $user->id;
                 if(!empty($request->get("cell_no"))){
@@ -114,20 +134,19 @@ class UserController extends Controller
                     $request->picture->storeAs('public/images',$images);
                     $user_details->picture = $images;
                 }
-                if($user_details->save()){
-                    $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
-                    ->select('users.*','user_details.*')
-                    ->where('users.id','=',$user->id)
-                    ->get()->first();
-                    return response()->json($returnUser,200);
-                }else{
-                    return response()->json(["message" => "Error occurs while processing request!"],400);
-                }
-            }else{
-                return response()->json(["message" => "Error occurs while processing request!"],400);
+                $user_details->save();
+            }catch(Exception $e){
+                DB::rollback();
+                return response()->json(["data" => $e],400);
             }
-        } 
-    }
+            DB::commit();
+            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
+            ->select('users.*','user_details.*')
+            ->where('users.id','=',$user->id)
+            ->get()->first();
+            return response()->json($returnUser,200);
+        }
+    } 
 
     /**
      * Display the specified resource.
