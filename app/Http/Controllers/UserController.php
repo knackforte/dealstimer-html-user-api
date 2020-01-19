@@ -137,7 +137,7 @@ class UserController extends Controller
                 $user_details->save();
             }catch(Exception $e){
                 DB::rollback();
-                return response()->json(["data" => $e],400);
+                return response()->json(["data" => "Error occurs while processing request!"],400);
             }
             DB::commit();
             $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
