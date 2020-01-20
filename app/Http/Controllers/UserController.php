@@ -16,7 +16,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::get(),200);
+        return response()->json(DB::table('role_user')->join('users', 'role_user.user_id', '=', 'users.id')->join('roles','roles.id', '=', 'role_user.role_id')->select('users.id','users.first_name','users.last_name','users.email','users.username','roles.display_name')->get(),200);
     }
     /**
      * Show the form for creating a new resource.
