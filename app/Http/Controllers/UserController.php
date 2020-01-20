@@ -10,6 +10,7 @@ use App\Role;
 use DB;
 use Validator;
 use Exception;
+use Image;
 
 class UserController extends Controller
 {
@@ -128,11 +129,14 @@ class UserController extends Controller
                 if(!empty($request->get("street_address"))){
                     $user_details->street_address = $request->get("street_address");
                 }
-                if ($request->hasFile('picture')) {
-                    $images = $request->picture->getClientOriginalName();
-                    $images = time().'_'.$images;
-                    $request->picture->storeAs('public/images',$images);
-                    $user_details->picture = $images;
+                if($request->file('picture') != null)
+                {
+                    $image = $request->file('picture');
+                    $filename = time().'.'.$image->getClientOriginalExtension();
+                    $img = Image::make($image->getRealPath());
+                    $destinationPath = public_path('/images');
+                    $image->move($destinationPath, $filename);
+                    $user_details->picture = $filename;
                 }
                 $user_details->save();
             }catch(Exception $e){
