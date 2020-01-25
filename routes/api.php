@@ -19,3 +19,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::apiResource('user','UserController');
 Route::post('verifyUser','UserController@verifyUser');
+Route::get('getApiStores','UserController@getApiStores');
