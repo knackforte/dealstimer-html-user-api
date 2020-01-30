@@ -10,10 +10,12 @@ class UsersTableSeeder extends Seeder
     public function run()
     {
         User::create([
-            "email" => "ashakir@knackforte.com",
+            "email" => "admin@admin.com",
             "first_name" => "Abdullah",
             "last_name" => "Shakir",
-            "password" =>  Hash::make("123456789")
+            "username" => "admin",
+            "password" =>  Hash::make("asdfasdf"),
+            "is_admin" => 1
         ]);
     }
 }

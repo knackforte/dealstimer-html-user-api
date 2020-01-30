@@ -7,10 +7,16 @@ use Illuminate\Support\Facades\Hash;
 use App\User;
 use App\UserDetails;
 use App\Role;
+use App\ProductCategory;
+use App\ProductCategorySubcategory;
+use App\ProductSubcategory;
+use App\ProductType;
+use App\ProductTypeCategory;
 use DB;
 use Validator;
 use Exception;
 use Image;
+
 
 class UserController extends Controller
 {
