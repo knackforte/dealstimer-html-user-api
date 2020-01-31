@@ -220,4 +220,29 @@ class ProductController extends Controller
     {
         //
     }
+
+    public function getProductsFromSharafDGAPI(Request $request){
+        $data = $request->getContent();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://9khjlg93j1-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%2520for%2520vanilla%2520JavaScript%25203.24.9%253BJS%2520Helper%25202.23.2&x-algolia-application-id=9KHJLG93J1&x-algolia-api-key=e81d5b30a712bb28f0f1d2a52fc92dd0",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS =>$data,
+            CURLOPT_HTTPHEADER => array(
+                "Referer: https://uae.sharafdg.com/",
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+            )
+        );
+
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
 }

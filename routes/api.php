@@ -23,4 +23,6 @@ Route::get('getApiStores','UserController@getApiStores');
 
 Route::apiResource('product','ProductController');
 Route::post('storeViaModal', 'ProductController@storeViaModal');
+Route::post('getProductsFromSharafDGAPI', 'ProductController@getProductsFromSharafDGAPI');
+
 
