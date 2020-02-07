@@ -18,6 +18,7 @@ class CreateProductCategorySubcategoryTable extends Migration
             $table->unsignedInteger('product_subcategory');
             $table->foreign('product_category')->references('id')->on('product_category');
             $table->foreign('product_subcategory')->references('id')->on('product_subcategory');
+            $table->primary(array('product_category', 'product_subcategory'),'product_category_subcategory_pk');
         });
     }
 

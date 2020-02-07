@@ -10,6 +10,7 @@ use App\ProductSubcategory;
 use Validator;
 use Image;
 use Storage;
+use DB;
 
 class ProductController extends Controller
 {
@@ -20,7 +21,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(DB::table('products')->join('product_category', 'products.category', '=', 'product_category.id')->select('products.id','products.name','products.picture','products.sale_price','product_category.display_name')->get(),200);
     }
 
     /**
@@ -244,5 +245,23 @@ class ProductController extends Controller
         $response = curl_exec($curl);
         curl_close($curl);
         return $response;
+    }
+
+    public function getProductTypes(){
+        return response()->json(ProductType::all(),200);
+    }
+
+    public function getProductCategories(Request $request){
+        $typeName = $request->get('typeName');
+        $typeObj = DB::table('product_type')->where('product_type.name', '=', $typeName)->get()->first();
+        $typeId = $typeObj->id;
+        return response()->json(DB::table('product_type_category')->join('product_type', 'product_type.id', '=', 'product_type_category.product_type')->join('product_category','product_category.id', '=', 'product_type_category.product_category')->where('product_type_category.product_type','=',$typeId)->select('product_category.name','product_category.display_name')->get(),200);
+    }
+
+    public function getProductSubcategories(Request $request){
+        $catName = $request->get('catName');
+        $catObj = DB::table('product_category')->where('product_category.name', '=', $catName)->get()->first();
+        $catId = $catObj->id;
+        return response()->json(DB::table('product_category_subcategory')->join('product_category', 'product_category.id', '=', 'product_category_subcategory.product_category')->join('product_subcategory','product_subcategory.id', '=', 'product_category_subcategory.product_subcategory')->where('product_category_subcategory.product_category','=',$catId)->select('product_subcategory.name','product_subcategory.display_name')->get(),200);
     }
 }

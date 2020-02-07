@@ -16,12 +16,6 @@ class CreateProductsTable extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->string('picture');
-            $table->string('permalink');
-            $table->float('price');
-            $table->float('sale_price');
-            $table->boolean('in_stock');
-            $table->string('discount');
             $table->unsignedInteger('type');
             $table->unsignedInteger('category');
             $table->unsignedInteger('sub_category');
