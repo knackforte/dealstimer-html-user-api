@@ -9,10 +9,6 @@ use App\UserDetails;
 use App\Role;
 use App\Product;
 use App\ProductCategory;
-use App\ProductCategorySubcategory;
-use App\ProductSubcategory;
-use App\ProductType;
-use App\ProductTypeCategory;
 use DB;
 use Validator;
 use Exception;
@@ -49,7 +45,8 @@ class UserController extends Controller
             'email'                      => 'required|email|unique:users',
             'password'                   => 'required|min:8|confirmed',
             'password_confirmation'      => 'required|min:8',
-            'username'                   => 'required|unique:users'
+            'username'                   => 'required|unique:users',
+            'store_name'                 => 'required',
         );
         $messages = array(
             'first_name.required' => 'First name is required.',
@@ -63,7 +60,8 @@ class UserController extends Controller
             'email.unique:users' => 'Entered Email already exists.',
             'password.min:8' => 'Password should contain minimum of 8 characters.',
             'password.confirmed' => 'Password and confirm password should match.',
-            'password_confirmation.min:8' => 'Confirm Password should contain minimum of 8 characters.'
+            'password_confirmation.min:8' => 'Confirm Password should contain minimum of 8 characters.',
+            'store_name.required' => 'Store name is required.',
         );
         $validator = Validator::make($request->all(), $rules, $messages);
         if($validator->fails()){
