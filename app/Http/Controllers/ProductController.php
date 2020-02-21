@@ -7,6 +7,8 @@ use App\Product;
 use App\ProductType;
 use App\ProductCategory;
 use App\ProductSubcategory;
+use App\ProductImage;
+use App\ProductDetails;
 use Validator;
 use Image;
 use Storage;
@@ -21,7 +23,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return response()->json(DB::table('products')->join('product_category', 'products.category', '=', 'product_category.id')->select('products.id','products.name','products.picture','products.sale_price','product_category.display_name')->get(),200);
+        return response()->json(DB::table('products')->join('product_category', 'products.category', '=', 'product_category.id')->join('product_images', 'products.id', '=', 'product_images.product_id')->join('vendor_product', 'products.id' , '=', 'vendor_product.product_id')->select('products.*','product_category.*','vendor_product.*')->get(),200);
     }
 
     /**
@@ -45,22 +47,18 @@ class ProductController extends Controller
         $rules = array(
             'name'                   => 'required',
             'price'                  => 'required',
-            'discount'               => 'required',
-            'sale_price'             => 'required',
-            'permalink'              => 'required',
             'type'                   => 'required',
             'category'               => 'required',
-            'sub_category'           => 'required'
+            'sub_category'           => 'required',
+            'created_by'             => 'required'
         );
         $messages = array(
             'name.required'            => 'Product name is required.',
             'price.required'           => 'Price is required.',
-            'discount.required'        => 'Discount is required.',
-            'sale_price.required'      => 'Sale Price is required.',
-            'permalink.required'       => 'Product URl is required.',
             'type.required'            => 'Product Type is required.',
             'category.required'        => 'Product Category is required.',
-            'sub_category.required'    => 'Product Sub Category is required.'
+            'sub_category.required'    => 'Product Sub Category is required.',
+            'created_by.required'      => 'Product Owner is required.'
         );
         $validator = Validator::make($request->all(), $rules, $messages);
         if($validator->fails()){
@@ -71,25 +69,25 @@ class ProductController extends Controller
         $product_type_obj = new ProductType;
         $product_category_obj  = new ProductCategory;
         $product_subcategory_obj  = new ProductSubcategory;
-
-        $product->name = $request->get("name");
-        $product->permalink = $request->get("permalink");
-        $product->price = $request->get("price");
-        $product->sale_price = $request->get("sale_price");
-        if(!empty($request->get("in_stock"))){
-            $product->in_stock = 1;
-        }else{
-            $product->in_stock = 0;
-        }
-        $product->discount = $request->get("discount");
+        $product_images = new ProductImage;
 
         $product_type_obj = ProductType::where('name',$request->get("type"))->first();
         $product_category_obj = ProductCategory::where('name',$request->get("category"))->first();
         $product_subcategory_obj = ProductSubcategory::where('name',$request->get("sub_category"))->first();
         
+        $product->name = $request->get("name");
         $product->type = $product_type_obj->id;
         $product->category = $product_category_obj->id;
         $product->sub_category = $product_subcategory_obj->id;
+        $product->created_by = $request->get("created_by");
+
+        $product->price = $request->get("price");
+
+        if(!empty($request->get("in_stock"))){
+            $product->in_stock = 1;
+        }else{
+            $product->in_stock = 0;
+        }
 
         if($request->file('picture') != null)
         {
@@ -98,22 +96,25 @@ class ProductController extends Controller
             $img = Image::make($image->getRealPath());
             $destinationPath = public_path('/images');
             $image->move($destinationPath, $filename);
-            $product->picture = $filename;
+            $product_images->picture_url = $filename;
         }
-
-        if($product->save()){
-            return response()->json($product,201);
-        }else{
+        DB::beginTransaction();
+        try{
+            $product->save();
+            $product_images->product_id = $product->id;
+            $product_images->save();
+        }catch(Exception $e){
+            DB::rollback();
             return response()->json(["message" => "Error occurs while processing request!"],400);
         }
+        DB::commit();
+        return response()->json($product,201);
     }
 
     public function storeViaModal(Request $request){
         $rules = array(
             'name'                   => 'required',
             'price'                  => 'required',
-            'discount'               => 'required',
-            'sale_price'             => 'required',
             'permalink'              => 'required',
             'type'                   => 'required',
             'category'               => 'required',
@@ -122,8 +123,6 @@ class ProductController extends Controller
         $messages = array(
             'name.required'            => 'Product name is required.',
             'price.required'           => 'Price is required.',
-            'discount.required'        => 'Discount is required.',
-            'sale_price.required'      => 'Sale Price is required.',
             'permalink.required'       => 'Product URl is required.',
             'type.required'            => 'Product Type is required.',
             'category.required'        => 'Product Category is required.',
@@ -138,18 +137,27 @@ class ProductController extends Controller
         $product_type_obj = new ProductType;
         $product_category_obj  = new ProductCategory;
         $product_subcategory_obj  = new ProductSubcategory;
+        
 
         $product->name = $request->get("name");
         $product->permalink = $request->get("permalink");
         $product->price = $request->get("price");
-        $product->sale_price = $request->get("sale_price");
+        if($request->get("sale_price") !== "null"){
+            $product->sale_price = $request->get("sale_price");
+        }else{
+            $product->sale_price = 0;
+        }
         if(!empty($request->get("in_stock"))){
             $product->in_stock = 1;
         }else{
             $product->in_stock = 0;
         }
-        $product->discount = $request->get("discount");
 
+        if($request->get("discount") !== "null"){
+            $product->discount = $request->get("discount");
+        }else{
+            $product->discount = 0;
+        }
         $product_type_obj = ProductType::where('name',$request->get("type"))->first();
         $product_category_obj = ProductCategory::where('name',$request->get("category"))->first();
         $product_subcategory_obj = ProductSubcategory::where('name',$request->get("sub_category"))->first();
@@ -263,5 +271,9 @@ class ProductController extends Controller
         $catObj = DB::table('product_category')->where('product_category.name', '=', $catName)->get()->first();
         $catId = $catObj->id;
         return response()->json(DB::table('product_category_subcategory')->join('product_category', 'product_category.id', '=', 'product_category_subcategory.product_category')->join('product_subcategory','product_subcategory.id', '=', 'product_category_subcategory.product_subcategory')->where('product_category_subcategory.product_category','=',$catId)->select('product_subcategory.name','product_subcategory.display_name')->get(),200);
+    }
+
+    public function getAdminProducts(Request $request){
+
     }
 }
