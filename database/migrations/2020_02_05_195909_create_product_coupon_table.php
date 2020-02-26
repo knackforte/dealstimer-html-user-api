@@ -14,12 +14,12 @@ class CreateProductCouponTable extends Migration
     public function up()
     {
         Schema::create('product_coupon', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('coupon_id');
             $table->unsignedInteger('product_id');
             $table->float('coupon_perc')->nullable();
             $table->unsignedInteger('coupon_val')->nullable();
             $table->boolean('is_active');
-            $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('product_id')->references('product_id')->on('product');
         });
     }
 

@@ -27,7 +27,8 @@ Route::post('getProductsFromSharafDGAPI', 'ProductController@getProductsFromShar
 Route::post('getProductTypes', 'ProductController@getProductTypes');
 Route::post('getProductCategories', 'ProductController@getProductCategories');
 Route::post('getProductSubcategories', 'ProductController@getProductSubcategories');
-Route::post('getAdminProducts', 'ProductController@getAdminProducts');
-
+Route::post('getAdminProducts', 'ProductController@getAdminProducts');   
+Route::get('getSubCategory', 'ProductController@getSubCategory');
+Route::get('getParentCategory', 'ProductController@getParentCategory');
 
 

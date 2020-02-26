@@ -4,11 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Product;
-use App\ProductType;
 use App\ProductCategory;
-use App\ProductSubcategory;
 use App\ProductImage;
-use App\ProductDetails;
 use Validator;
 use Image;
 use Storage;
@@ -23,7 +20,16 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return response()->json(DB::table('products')->join('product_category', 'products.category', '=', 'product_category.id')->join('product_images', 'products.id', '=', 'product_images.product_id')->join('vendor_product', 'products.id' , '=', 'vendor_product.product_id')->select('products.*','product_category.*','vendor_product.*')->get(),200);
+        return response()->json(DB::table('product')
+                                ->join('product_images', 'product.product_id', '=', 'product_images.product_id')
+                                ->join('product_category', 'product.category_id', '=', 'product_category.category_id')
+                                ->select('product.product_id','product.name','product.price','product.permalink','product.category_id','product.parent_id as product_parent','product.created_by','product.created_at','product.updated_at',
+                                         'product_category.category_name','product_category.display_name','product_category.parent_id as category_parent',
+                                          DB::raw("group_concat(product_images.picture_url) as images"))
+                                ->groupBy('product.product_id','product.name','product.price','product.permalink','product.category_id','product.parent_id','product.created_by','product.created_at','product.updated_at',
+                                          'product_category.category_name','product_category.display_name','product_category.parent_id')
+                                ->get(),200);
+        //return response()->json(DB::table('product_images')->select(DB::raw("group_concat(product_images.picture_url) as images"))->groupBy('product_images.product_id')->get(),200);
     }
 
     /**
@@ -43,22 +49,18 @@ class ProductController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {     
         $rules = array(
-            'name'                   => 'required',
-            'price'                  => 'required',
-            'type'                   => 'required',
-            'category'               => 'required',
-            'sub_category'           => 'required',
-            'created_by'             => 'required'
+            'name'         => 'required',
+            'category_id'  => 'required',
+            'created_by'   => 'required',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         );
         $messages = array(
             'name.required'            => 'Product name is required.',
-            'price.required'           => 'Price is required.',
-            'type.required'            => 'Product Type is required.',
-            'category.required'        => 'Product Category is required.',
-            'sub_category.required'    => 'Product Sub Category is required.',
-            'created_by.required'      => 'Product Owner is required.'
+            'category_id.required'     => 'Product Category is required.',
+            'created_by.required'      => 'Product Owner is required.',
+            'images.required'          => 'picture is required'
         );
         $validator = Validator::make($request->all(), $rules, $messages);
         if($validator->fails()){
@@ -66,67 +68,70 @@ class ProductController extends Controller
         }
 
         $product = new Product;
-        $product_type_obj = new ProductType;
-        $product_category_obj  = new ProductCategory;
-        $product_subcategory_obj  = new ProductSubcategory;
-        $product_images = new ProductImage;
+             
 
-        $product_type_obj = ProductType::where('name',$request->get("type"))->first();
-        $product_category_obj = ProductCategory::where('name',$request->get("category"))->first();
-        $product_subcategory_obj = ProductSubcategory::where('name',$request->get("sub_category"))->first();
-        
         $product->name = $request->get("name");
-        $product->type = $product_type_obj->id;
-        $product->category = $product_category_obj->id;
-        $product->sub_category = $product_subcategory_obj->id;
-        $product->created_by = $request->get("created_by");
+        $product->category_id = $request->get("category_id");
+        $product->created_by =  $request->get("created_by");
 
-        $product->price = $request->get("price");
-
-        if(!empty($request->get("in_stock"))){
-            $product->in_stock = 1;
-        }else{
-            $product->in_stock = 0;
-        }
-
-        if($request->file('picture') != null)
-        {
-            $image = $request->file('picture');
-            $filename = time().'.'.$image->getClientOriginalExtension();
-            $img = Image::make($image->getRealPath());
-            $destinationPath = public_path('/images');
-            $image->move($destinationPath, $filename);
-            $product_images->picture_url = $filename;
-        }
         DB::beginTransaction();
-        try{
+        try
+        {
             $product->save();
-            $product_images->product_id = $product->id;
-            $product_images->save();
-        }catch(Exception $e){
-            DB::rollback();
-            return response()->json(["message" => "Error occurs while processing request!"],400);
-        }
-        DB::commit();
-        return response()->json($product,201);
+            if($request->hasfile('images'))
+            {
+                foreach($request->file('images') as $image)   
+                {
+                    $product_images = new ProductImage;
+                    $product_images->product_id = $product->id; 
+                    //get file name with extension
+                    $fileNameWithExtension = $image->getClientOriginalName();
+                    //get just file name
+                    $filename = pathinfo($fileNameWithExtension,PATHINFO_FILENAME);
+                    //get just extension
+                    $extension = $image->getClientOriginalExtension();
+                    //file name to store
+                    $FileNameToStore= $filename.'_'.time().'.'.$extension;
+
+                    $product_images->picture_url = $FileNameToStore;
+                    //upload image
+
+                    $img = Image::make($image->getRealPath());
+                    $destinationPath = public_path('/images');
+                    $image->move($destinationPath, $FileNameToStore);
+                    
+                    $product_images->save();
+                }
+            }   
     }
+    catch(Exception $e){
+        DB::rollback();
+        return response()->json(["message" => "Error occurs while processing request!"],400);
+    }
+    DB::commit();
+        return response()->json(["message" => "Success"],200);
+    }
+
+            ///////////////////////////////////
+            ///////////////////////////////////
+            ///////////////////////////////////
 
     public function storeViaModal(Request $request){
         $rules = array(
-            'name'                   => 'required',
-            'price'                  => 'required',
-            'permalink'              => 'required',
-            'type'                   => 'required',
-            'category'               => 'required',
-            'sub_category'           => 'required'
+            'name'              => 'required',
+            'product_parent_id' => 'required',
+            'permalink'         => 'required',
+            'picture'           => 'required',
+            'category_id'       => 'required',
+            'created_by'        => 'required'
         );
         $messages = array(
-            'name.required'            => 'Product name is required.',
-            'price.required'           => 'Price is required.',
-            'permalink.required'       => 'Product URl is required.',
-            'type.required'            => 'Product Type is required.',
-            'category.required'        => 'Product Category is required.',
-            'sub_category.required'    => 'Product Sub Category is required.'
+            'name.required'              => 'Product name is required.',
+            'product_parent_id.required' => 'Parent id is required.',
+            'permalink.required'         => 'Product URl is required.',
+            'picture.required'            => 'Image is required.',
+            'category_id.required'            => 'Category Id is required.',
+            'created_by.required'            => 'Created By Id is required.'
         );
         $validator = Validator::make($request->all(), $rules, $messages);
         if($validator->fails()){
@@ -134,37 +139,12 @@ class ProductController extends Controller
         }
 
         $product = new Product;
-        $product_type_obj = new ProductType;
-        $product_category_obj  = new ProductCategory;
-        $product_subcategory_obj  = new ProductSubcategory;
-        
-
         $product->name = $request->get("name");
         $product->permalink = $request->get("permalink");
-        $product->price = $request->get("price");
-        if($request->get("sale_price") !== "null"){
-            $product->sale_price = $request->get("sale_price");
-        }else{
-            $product->sale_price = 0;
-        }
-        if(!empty($request->get("in_stock"))){
-            $product->in_stock = 1;
-        }else{
-            $product->in_stock = 0;
-        }
-
-        if($request->get("discount") !== "null"){
-            $product->discount = $request->get("discount");
-        }else{
-            $product->discount = 0;
-        }
-        $product_type_obj = ProductType::where('name',$request->get("type"))->first();
-        $product_category_obj = ProductCategory::where('name',$request->get("category"))->first();
-        $product_subcategory_obj = ProductSubcategory::where('name',$request->get("sub_category"))->first();
+        $product->parent_id = $request->get("product_parent_id");
+        $product->category_id = $request->get("category_id");
+        $product->created_by = $request->get("created_by");
         
-        $product->type = $product_type_obj->id;
-        $product->category = $product_category_obj->id;
-        $product->sub_category = $product_subcategory_obj->id;
 
         $imageURL = $request->get('picture');
         $contents = file_get_contents($imageURL);
@@ -176,14 +156,21 @@ class ProductController extends Controller
         if(!Storage::disk('public_uploads')->put($file, $contents)) {
             return response()->json(["message" => "Error occurs while processing request!"],400);
         }
-
-        $product->picture = $filename;
-
-        if($product->save()){
-            return response()->json($product,201);
-        }else{
+        DB::beginTransaction();
+        try
+        {
+            $product->save();
+            $product_images = new ProductImage;
+            $product_images->product_id = $product->id; 
+            $product_images->picture_url = $filename;
+            $product_images->save();
+        }
+        catch(Exception $e){
+            DB::rollback();
             return response()->json(["message" => "Error occurs while processing request!"],400);
         }
+        DB::commit();
+        return response()->json(["message" => "success"],200);
     }
     /**
      * Display the specified resource.
@@ -249,31 +236,25 @@ class ProductController extends Controller
             ),
             )
         );
-
         $response = curl_exec($curl);
         curl_close($curl);
         return $response;
     }
 
-    public function getProductTypes(){
-        return response()->json(ProductType::all(),200);
-    }
-
-    public function getProductCategories(Request $request){
-        $typeName = $request->get('typeName');
-        $typeObj = DB::table('product_type')->where('product_type.name', '=', $typeName)->get()->first();
-        $typeId = $typeObj->id;
-        return response()->json(DB::table('product_type_category')->join('product_type', 'product_type.id', '=', 'product_type_category.product_type')->join('product_category','product_category.id', '=', 'product_type_category.product_category')->where('product_type_category.product_type','=',$typeId)->select('product_category.name','product_category.display_name')->get(),200);
-    }
-
-    public function getProductSubcategories(Request $request){
-        $catName = $request->get('catName');
-        $catObj = DB::table('product_category')->where('product_category.name', '=', $catName)->get()->first();
-        $catId = $catObj->id;
-        return response()->json(DB::table('product_category_subcategory')->join('product_category', 'product_category.id', '=', 'product_category_subcategory.product_category')->join('product_subcategory','product_subcategory.id', '=', 'product_category_subcategory.product_subcategory')->where('product_category_subcategory.product_category','=',$catId)->select('product_subcategory.name','product_subcategory.display_name')->get(),200);
-    }
 
     public function getAdminProducts(Request $request){
 
+    }
+    public function getParentCategory()
+    {
+        return response()->json( DB::table('product_category')
+        ->where('product_category.parent_id','=',null)
+        ->select('product_category.category_name','product_category.display_name')->get());
+    }
+    public function getSubCategory(Request $request)
+    {
+        return response()->json( DB::table('product_category')
+                         ->where('product_category.parent_id','=',$request->get('id'))
+                         ->select('product_category.category_name','product_category.display_name')->get());
     }
 }

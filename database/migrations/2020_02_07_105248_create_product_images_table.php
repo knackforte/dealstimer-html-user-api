@@ -16,7 +16,7 @@ class CreateProductImagesTable extends Migration
         Schema::create('product_images', function (Blueprint $table) {
             $table->unsignedInteger('product_id');
             $table->string('picture_url');
-            $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('product_id')->references('product_id')->on('product');
             $table->primary(array('product_id', 'picture_url'));
         });
     }

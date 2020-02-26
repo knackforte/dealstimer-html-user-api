@@ -14,12 +14,12 @@ class CreateProductDiscountTable extends Migration
     public function up()
     {
         Schema::create('product_discount', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('discount_id');
             $table->unsignedInteger('product_id');
             $table->float('discount_perc')->nullable();
             $table->unsignedInteger('discount_val')->nullable();
             $table->boolean('is_active');
-            $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('product_id')->references('product_id')->on('product');
         });
     }
 

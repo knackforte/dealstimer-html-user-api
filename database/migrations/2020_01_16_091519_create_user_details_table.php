@@ -14,7 +14,7 @@ class CreateUserDetailsTable extends Migration
     public function up()
     {
         Schema::create('user_details', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('detail_id');
             $table->string('picture')->nullable();
             $table->string('cell_no')->nullable();
             $table->string('address')->nullable();
@@ -29,7 +29,7 @@ class CreateUserDetailsTable extends Migration
             $table->string('longitude')->nullable();
             $table->string('street_address')->nullable();
             $table->unsignedInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('user_id')->references('user_id')->on('users');
             $table->timestamps();
         });
     }

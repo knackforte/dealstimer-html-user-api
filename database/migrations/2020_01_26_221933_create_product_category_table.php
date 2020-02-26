@@ -14,11 +14,11 @@ class CreateProductCategoryTable extends Migration
     public function up()
     {
         Schema::create('product_category', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('category_id');
             $table->string('category_name');
             $table->string('display_name');
             $table->unsignedInteger('parent_id')->nullable();
-            $table->foreign('parent_id')->references('id')->on('product_category');
+            $table->foreign('parent_id')->references('category_id')->on('product_category');
 
         });
     }
