@@ -23,12 +23,16 @@ Route::get('getApiStores','UserController@getApiStores');
 
 Route::apiResource('product','ProductController');
 Route::post('storeViaModal', 'ProductController@storeViaModal');
-Route::post('getProductsFromSharafDGAPI', 'ProductController@getProductsFromSharafDGAPI');
-Route::post('getProductTypes', 'ProductController@getProductTypes');
-Route::post('getProductCategories', 'ProductController@getProductCategories');
-Route::post('getProductSubcategories', 'ProductController@getProductSubcategories');
-Route::post('getAdminProducts', 'ProductController@getAdminProducts');   
-Route::get('getSubCategory', 'ProductController@getSubCategory');
-Route::get('getParentCategory', 'ProductController@getParentCategory');
+Route::post('getProductsFromApiOrScrapper', 'ProductController@getProductsFromApiOrScrapper');
+Route::post('getAdminProducts', 'ProductController@getAdminProducts'); 
+Route::get('getCategories', 'ProductController@getCategories');
+Route::get('getProductsByCategoryId', 'ProductController@getProductsByCategoryId');
+Route::get('getProductsByVendorId', 'ProductController@getProductsByVendorId');
+Route::get('getVendorProductsByCategoryId', 'ProductController@getVendorProductsByCategoryId');
+
+
+
+
+
 
 
