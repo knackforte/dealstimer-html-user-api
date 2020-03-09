@@ -182,7 +182,7 @@ class UserController extends Controller
     }
 
     public function getApiStores(){
-        return response()->json(DB::table('user_details')->where('api_enabled',1)->join('users', 'user_details.user_id', '=', 'users.id')->select('users.id','user_details.picture','user_details.store_name','user_details.store_url')->get(),200);
+        return response()->json(DB::table('user_details')->where('api_enabled',1)->join('users', 'user_details.user_id', '=', 'users.user_id')->select('users.user_id','user_details.picture','user_details.store_name','user_details.store_url')->get(),200);
     }
 
     /**
