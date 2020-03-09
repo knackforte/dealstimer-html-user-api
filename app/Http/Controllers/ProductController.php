@@ -2,6 +2,8 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Product;
+use App\History;
+use App\Favourite;
 use App\ProductCategory;
 use App\ProductImage;
 use App\AllCategory;
@@ -322,6 +324,80 @@ class ProductController extends Controller
                                     'product_category.category_name','product_category.display_name','product_category.parent_id')
                         ->where('product.created_by','=',$request->vendor_id)
                         ->where('product.category_id','=',$request->category_id)
+                        ->get(),200);
+    }
+
+    public function setHistory(Request $request)
+    {
+        $history = new History;
+        $history->product_id = $request->get("product_id"); 
+        $history->user_id = $request->get("user_id");  
+        DB::beginTransaction();
+        try
+        {
+            $history->save(); 
+        }
+        catch(Exception $e){
+            DB::rollback();
+            return response()->json(["message" => "Error occurs while processing request!"],400);
+        }
+        DB::commit();
+        return response()->json(["message" => "success"],200);
+    }
+
+    public function getHistory(Request $request)
+    {
+        return response()->json(DB::table('histories')
+                        ->Join('product', 'product.product_id', '=', 'histories.product_id')
+                        ->Join('product_images', 'product_images.product_id', '=', 'product.product_id')
+                        ->select('product.name','product.price','product.permalink',
+                                    DB::raw("group_concat(product_images.picture_url) as images"))
+                        ->groupBy('product.name','product.price','product.permalink')
+                        ->where('histories.user_id','=',$request->user_id)
+                        ->orderBy('histories.created_at','desc')
+                        ->get(),200);
+    }
+
+    public function setFavourites(Request $request)
+    {
+        $favourites = new Favourite;
+        $favourites->product_id = $request->get("product_id"); 
+        $favourites->user_id = $request->get("user_id");  
+        DB::beginTransaction();
+        try
+        {
+            $favourites->save(); 
+        }
+        catch(Exception $e){
+            DB::rollback();
+            return response()->json(["message" => "Error occurs while processing request!"],400);
+        }
+        DB::commit();
+        return response()->json(["message" => "success"],200);
+    }
+
+    public function getFavourites(Request $request)
+    {
+        return response()->json(DB::table('favourites')
+                        ->Join('product', 'product.product_id', '=', 'favourites.product_id')
+                        ->Join('product_images', 'product_images.product_id', '=', 'product.product_id')
+                        ->select('product.name','product.price','product.permalink',
+                                    DB::raw("group_concat(product_images.picture_url) as images"))
+                        ->groupBy('product.name','product.price','product.permalink')
+                        ->where('favourites.user_id','=',$request->user_id)
+                        ->orderBy('favourites.created_at','desc')
+                        ->get(),200);
+    }
+    public function setProductVideos()
+    {
+
+    }
+
+    public function getProductVideos(Request $request)
+    {
+        return response()->json(DB::table('product_videos')
+                        ->select('product_videos.video_url')
+                        ->where('product_videos.product_id','=',$request->product_id)
                         ->get(),200);
     }
 }

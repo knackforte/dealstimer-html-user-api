@@ -29,6 +29,10 @@ Route::get('getCategories', 'ProductController@getCategories');
 Route::get('getProductsByCategoryId', 'ProductController@getProductsByCategoryId');
 Route::get('getProductsByVendorId', 'ProductController@getProductsByVendorId');
 Route::get('getVendorProductsByCategoryId', 'ProductController@getVendorProductsByCategoryId');
+Route::get('setHistory', 'ProductController@setHistory');
+Route::get('getHistory', 'ProductController@getHistory');
+Route::get('setFavourites', 'ProductController@setFavourites');
+Route::get('getFavourites', 'ProductController@getFavourites');
 
 
 
