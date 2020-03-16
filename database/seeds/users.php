@@ -15,7 +15,6 @@ class UsersTableSeeder extends Seeder
             "last_name" => "Shakir",
             "username" => "admin",
             "password" =>  Hash::make("asdfasdf"),
-            "is_admin" => 1
         ]);
     }
 }

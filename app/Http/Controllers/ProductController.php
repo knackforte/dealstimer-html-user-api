@@ -238,7 +238,7 @@ class ProductController extends Controller
     public function getProductsFromApiOrScrapper(Request $request)
     {
         $response = '';
-        switch($request->user_id)
+        switch($request->header("store_id"))
         {
             case 2:    //sharatDG
                 $data = $request->getContent();
@@ -266,7 +266,7 @@ class ProductController extends Controller
             case 3:
                 $curl = curl_init();
                 curl_setopt_array($curl, array(
-                CURLOPT_URL => "http://localhost/twitter-php-scraper/examples/getProductdetail.php?".$request->url,
+                CURLOPT_URL => "http://localhost/twitter-php-scraper/examples/getBabyShopProductDetail.php?".$request->url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => "",
                 CURLOPT_MAXREDIRS => 10,
