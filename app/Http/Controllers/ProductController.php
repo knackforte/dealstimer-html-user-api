@@ -45,8 +45,8 @@ class ProductController extends Controller
             foreach($result as $res)
             {
                 $obj = new AllCategory;
-                $obj->name = $res->display_name;
-                $obj->value = $res->category_name;
+                $obj->value = $res->category_id;
+                $obj->label = $res->display_name;
                 $obj->children = $this->allCategory($res->category_id);
                 $Categories[] = $obj;
             }

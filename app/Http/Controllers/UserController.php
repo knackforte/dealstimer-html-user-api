@@ -19,7 +19,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(DB::table('role_user')->join('users', 'role_user.user_id', '=', 'users.id')->join('roles','roles.id', '=', 'role_user.role_id')->select('users.id','users.first_name','users.last_name','users.email','users.username','roles.display_name')->get(),200);
+        return response()->json(DB::table('role_user')->join('users', 'role_user.user_id', '=', 'users.user_id')->join('roles','roles.id', '=', 'role_user.role_id')->select('users.user_id','users.first_name','users.last_name','users.email','users.username','roles.display_name')->get(),200);
     }
     /**
      * Show the form for creating a new resource.
@@ -149,9 +149,9 @@ class UserController extends Controller
                 return response()->json(["data" => "Error occurs while processing request!"],400);
             }
             DB::commit();
-            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
+            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.user_id')
             ->select('users.*','user_details.*')
-            ->where('users.id','=',$user->id)
+            ->where('users.user_id','=',$user->id)
             ->get()->first();
             return response()->json($returnUser,200);
         }
@@ -173,16 +173,16 @@ class UserController extends Controller
             $user = User::find($id);
             return response()->json($user,200);
         }else if($user->hasRole('vendor')){
-            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
+            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.user_id')
             ->select('users.*','user_details.*')
-            ->where('users.id','=',$id)
+            ->where('users.user_id','=',$id)
             ->get()->first();
             return response()->json($returnUser,200);
         }
     }
 
     public function getApiStores(){
-        return response()->json(DB::table('user_details')->where('api_enabled',1)->join('users', 'user_details.user_id', '=', 'users.id')->select('users.id','user_details.picture','user_details.store_name','user_details.store_url')->get(),200);
+        return response()->json(DB::table('users')->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')->select('users.user_id','user_details.picture','user_details.store_name','user_details.store_url')->where('users.api_enabled',1)->get(),200);
     }
 
     /**
@@ -219,9 +219,9 @@ class UserController extends Controller
             if(!is_null($request->picture)){
                 $user_details->update(['picture' => $request->picture]);
             }
-            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.id')
+            $returnUser = User::join('user_details', 'user_details.user_id', '=', 'users.user_id')
             ->select('users.*','user_details.*')
-            ->where('users.id','=',$id)
+            ->where('users.user_id','=',$id)
             ->get()->first();
             return response()->json($returnUser,200);
         }
